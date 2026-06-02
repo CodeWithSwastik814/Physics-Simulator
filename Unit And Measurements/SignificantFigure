@@ -1,0 +1,42 @@
+import re 
+import math
+
+def count_sig_figs(raw: str):
+    s = raw.strip().lstrip("+-")
+
+    sciMatch = re.match(r'^([\d.]+)[eE]', s)
+    if sciMatch:
+        s = sciMatch.group(1)
+
+    if not s or not re.match(r'^\d[\d.]*$', s):
+        return None
+
+    has_decimal = '.' in s
+    int_part, dec_part = s.split('.') if has_decimal else (s, None)
+
+    digits = []
+    started = False
+
+    for ch in int_part:
+        if ch != '0':
+            started = True
+        digits.append({'ch': ch, 'sig': 'sig' if started else 'no'})
+
+    if has_decimal:
+        for ch in (dec_part or ''):
+            if not started and ch == '0':
+                digits.append({'ch': ch, 'sig': 'no'})
+            else:
+                started = True
+                digits.append({'ch': ch, 'sig': 'sig'})
+    else:
+        last_nz = max((i for i, d in enumerate(digits) if d['ch'] != '0'), default=-1)
+        for i in range(last_nz + 1, len(digits)):
+            digits[i]['sig'] = 'amb'
+
+    return sum(1 for d in digits if d['sig'] == 'sig')
+
+
+user_input = input("Enter a number : ").strip()
+result = count_sig_figs(user_input)
+print(f"{user_input} has {result} significant figure(s)\n")
